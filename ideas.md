@@ -1,0 +1,25 @@
+# Goals
+- Take the time-tracking data I collected over the semester and:
+    - Glean interesting insights from it
+    - Use the data to answer interesting questions
+    - Visualize the data
+# Steps
+- [&check;] Learn about the Clockify API
+- [&check;] Get all of the data I need
+- [&check;] Preprocess the data
+    - What do I want the data to look like?
+        - Task ID
+        - Task Name
+        - Project ID
+        - Project Name
+        - Description
+        - Time Interval
+            - Start
+            - End
+            - Duration
+    - What forms should the data take?
+        - CSV
+        - JSON
+- [] Come up with some interesting questions to ask
+- [] Try to find answers to those questions via visualization, data exploration, etc.
+    - Recommendations for tools to use [here](https://towardsdatascience.com/10-free-tools-to-instantly-get-started-with-data-visualisation-d7fadb5f6dce)
