@@ -21,5 +21,14 @@
         - CSV
         - JSON
 - [] Come up with some interesting questions to ask
-- [] Try to find answers to those questions via visualization, data exploration, etc.
+    - How much sleep did I get on average each week?
+    - How much sleep did I practice month to month?
+    - What meals took the longest for me to eat?
+    - What was the most _unusual_ day? (Think of outliers in different senses of the word)
+    - How did my Career & Post-Grad task time change before and after I accepted the job on November 1st?
+    - How much time did I have for shower thoughts, on average?
+        - Related: What's a good estimate of how much water I used when showering?
+    - How many miles did I run?
+    - How much time did I meditate in total? On average?
+- [] Find answers to those questions via visualization, data exploration, etc.
     - Recommendations for tools to use [here](https://towardsdatascience.com/10-free-tools-to-instantly-get-started-with-data-visualisation-d7fadb5f6dce)
