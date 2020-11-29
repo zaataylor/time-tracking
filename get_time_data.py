@@ -13,6 +13,7 @@ USER_ENDPOINT = BASE_ENDPOINT + 'user'
 # Check https://clockify.me/developers-api, in the section
 # about time entry request parameters
 ENTRIES_PER_PAGE = 50
+DEFAULT_DELAY = 0.2
 
 def main():
     # Parse command-line args
@@ -60,7 +61,16 @@ def main():
                         help='The name of the file to write time entry data to. Defaults\n' +
                         'to \'entries.json\' if not specified.',
                         required=False)
+    parser.add_argument('-d',
+                        '--delay',
+                        type=float,
+                        dest='delay',
+                        help='Delay between subsequent calls to the Clockify API, in seconds.\n' +
+                        'Default value is 0.2. Using a value less than this may cause the program\n' +
+                        'to fail due to Clockify API rate limiting.',
+                        required=False)
     args = parser.parse_args()
+    
     api_key = args.api_key
     # use environment variable instead
     if api_key is None:
@@ -71,13 +81,15 @@ def main():
     api_key_header = {'X-Api-Key': api_key}
 
     # Get entry, project, and task info
+    req_delay = args.delay
     user_id, workspace_id = get_user_info(api_key_header)
-    projects = get_projects(workspace_id, api_key_header)
+    projects = get_projects(workspace_id, api_key_header, delay=req_delay)
     num_pages = args.num_pages
     num_entries = args.num_entries
     if num_pages is None:
         num_pages = int(math.ceil(num_entries / ENTRIES_PER_PAGE))
-    time_entries = get_time_entries(workspace_id, user_id, num_pages, api_key_header)
+    time_entries = get_time_entries(workspace_id, user_id, num_pages,
+                    api_key_header, delay=req_delay)
 
     # Write data to file
     proj_file = 'projects.json' if args.proj_file is None else args.proj_file
@@ -164,7 +176,7 @@ def get_tasks_by_project_id(workspace_id: str, project_id: str,
     return tasks
 
 def get_projects(workspace_id: str, api_key_header: Dict,
-    delay: float = 0.2) -> Dict:
+    delay=None) -> Dict:
     """Get project names, IDs, and associated tasks.
     
     The function returns information about the projects associated
@@ -203,6 +215,8 @@ def get_projects(workspace_id: str, api_key_header: Dict,
     ------
     `None`
     """
+    if delay is None:
+        delay = DEFAULT_DELAY
     projects = {}
     url = BASE_ENDPOINT + '/workspaces/{}/projects'.format(workspace_id)
     r = requests.get(url, headers=api_key_header)
@@ -217,7 +231,7 @@ def get_projects(workspace_id: str, api_key_header: Dict,
 
 def get_time_entries(workspace_id: str, user_id: str,
                      num_pages: int, api_key_header: Dict, 
-                     delay: float = 0.2) -> List:
+                     delay=None) -> List:
     """Get the time entries for a specific user in a specific workspace.
     
     This function returns a list of some (or all) of the time entries
@@ -254,6 +268,8 @@ def get_time_entries(workspace_id: str, user_id: str,
     A list of time entries, each of which is a `dict` with fields\n
     matching those described in the API documentation.
     """
+    if delay is None:
+        delay = DEFAULT_DELAY
     url = BASE_ENDPOINT + \
         '/workspaces/{}/user/{}/time-entries'.format(workspace_id, user_id)
     entries = []
