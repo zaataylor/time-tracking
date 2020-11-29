@@ -28,9 +28,11 @@ git clone https://github.com/zaataylor/time-tracking.git
 cd time-tracking
 ```
 
-3. Install the required project dependencies included in the `Pipfile` using:
+3. Install the required project dependencies included in the `Pipfile` and activate the created
+virtual environment using:
 ```bash
 pipenv install
+pipenv shell
 ```
 
 4. Get time tracking data by invoking `python get_time_data.py` with the proper command line parameters. Here is the
