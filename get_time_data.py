@@ -3,23 +3,95 @@ import time
 import json
 import math
 from typing import Dict, Tuple, List, Any
+import argparse
 
 import requests
 
 BASE_ENDPOINT = 'https://api.clockify.me/api/v1/'
 USER_ENDPOINT = BASE_ENDPOINT + 'user'
 
-API_KEY = os.getenv('CLOCKIFY_API_KEY')
-if API_KEY is None:
-    exit('Error: API key is None')
-# required header for all API requests
-X_API_HEADER = {'X-Api-Key': API_KEY}
-
 # Check https://clockify.me/developers-api, in the section
 # about time entry request parameters
 ENTRIES_PER_PAGE = 50
 
-def get_user_info() -> Tuple:
+def main():
+    # Parse command-line args
+    parser = argparse.ArgumentParser(prog='get_time_data.py',
+                                    description='Get Clockify projects, tasks, and time entry data and write it to files.',
+                                    epilog='Have fun tracking! :)')
+    parser.add_argument('-a',
+                        '--api-key',
+                        type=str,
+                        dest='api_key',
+                        help='Your personal Clockify API key. If not specified here, then you must\n' + 
+                        'have the CLOCKIFY_API_KEY environment variable set on your system.',
+                        required=False)
+    # This is cool! 
+    # https://stackoverflow.com/questions/11154946/require-either-of-two-arguments-using-argparse
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--num-pages',
+                        type=int,
+                        dest='num_pages',
+                        help='The number of (continguous) pages to request from the Clockify API.')
+    group.add_argument('--num-entries',
+                        type=int,
+                        dest='num_entries',
+                        help='Lower bound on the number of entries to grab from the Clockify API.\n' + 
+                        'If specified, this value will be used to calculate how many pages to grab\n' +
+                        'from the Clockify API.')
+    parser.add_argument('-p',
+                        '--projects-file',
+                        type=str,
+                        dest='proj_file',
+                        help='The name of the file to write projects information to. Defaults\n' +
+                        'to \'projects.json\' if not specified',
+                        required=False)
+    parser.add_argument('-t',
+                        '--tasks-file',
+                        type=str,
+                        dest='tasks_file',
+                        help='The name of the file to write tasks information to. Defaults\n' +
+                        'to \'tasks.json\' if not specified',
+                        required=False)
+    parser.add_argument('-e',
+                        '--entries-file',
+                        type=str,
+                        dest='entries_file',
+                        help='The name of the file to write time entry data to. Defaults\n' +
+                        'to \'entries.json\' if not specified',
+                        required=False)
+    args = parser.parse_args()
+    api_key = args.api_key
+    # use environment variable instead
+    if api_key is None:
+        api_key = os.getenv('CLOCKIFY_API_KEY')
+        if api_key is None:
+            exit('Error: API key is None. Add it to your environment variables\n' +
+            'as CLOCKIFY_API_KEY or specify it with the -a / --api-key CLI option.')
+    api_key_header = {'X-Api-Key': api_key}
+
+    # Get entry, project, and task info
+    user_id, workspace_id = get_user_info(api_key_header)
+    projects = get_projects(workspace_id, api_key_header)
+    num_pages = args.num_pages
+    num_entries = args.num_entries
+    if num_pages is None:
+        num_pages = int(math.ceil(num_entries / ENTRIES_PER_PAGE))
+    time_entries = get_time_entries(workspace_id, user_id, num_pages, api_key_header)
+
+    # Write data to file
+    proj_file = 'projects.json' if args.proj_file is None else args.proj_file
+    tasks_file = 'tasks.json' if args.tasks_file is None else args.tasks_file
+    entries_file = 'entries.json' if args.entries_file is None else args.entries_file
+    dump_data(projects, proj_file)
+    tasks = {}
+    for _, tasks_dict in projects.values():
+        for k, v in tasks_dict.items():
+            tasks[k] = v
+    dump_data(tasks, tasks_file)
+    dump_data(time_entries, entries_file)
+
+def get_user_info(api_key_header: Dict) -> Tuple:
     """Get user ID and workspace ID for currently logged in user.
     
     This function returns the user ID and workspace ID for
@@ -27,7 +99,8 @@ def get_user_info() -> Tuple:
 
     Parameters
     ----------
-    `None`
+    `api_key_header`: `Dict`\n
+    Dict containing the special header required by the Clockify API.
 
     Returns
     -------
@@ -42,7 +115,7 @@ def get_user_info() -> Tuple:
     fields for 'id' and 'activeWorkspace', corresponding to the\n
     user ID and workspace ID, respectively.
     """
-    r = requests.get(USER_ENDPOINT, headers=X_API_HEADER)
+    r = requests.get(USER_ENDPOINT, headers=api_key_header)
     response = r.json()
     user_id = workspace_id = None
     try:
@@ -52,7 +125,8 @@ def get_user_info() -> Tuple:
     except KeyError:
         raise
 
-def get_tasks_by_project_id(workspace_id: str, project_id: str) -> Dict:
+def get_tasks_by_project_id(workspace_id: str, project_id: str,
+    api_key_header: Dict) -> Dict:
     """Get tasks associated with a given project ID and workspace ID.
     
     This function returns a dictionary of tasks corresponding to a given
@@ -68,6 +142,9 @@ def get_tasks_by_project_id(workspace_id: str, project_id: str) -> Dict:
     `project_id`: `str`\n
     The ID of the project in the workspace
 
+    `api_key_header`: `Dict`\n
+    Dict containing the special header required by the Clockify API.
+
     Returns
     -------
     `Dict`\n
@@ -80,13 +157,14 @@ def get_tasks_by_project_id(workspace_id: str, project_id: str) -> Dict:
     tasks = {}
     url = BASE_ENDPOINT + '/workspaces/{}/projects/{}/tasks'.format(
         workspace_id, project_id)
-    r = requests.get(url, headers=X_API_HEADER)
+    r = requests.get(url, headers=api_key_header)
     response = r.json()
     for task in response:
         tasks[task['id']] = task['name']
     return tasks
 
-def get_projects(workspace_id: str, delay: float = 0.2) -> Dict:
+def get_projects(workspace_id: str, api_key_header: Dict,
+    delay: float = 0.2) -> Dict:
     """Get project names, IDs, and associated tasks.
     
     The function returns information about the projects associated
@@ -107,6 +185,9 @@ def get_projects(workspace_id: str, delay: float = 0.2) -> Dict:
     `workspace_id`: `str`\n
     The ID of the workspace to get project information from.
 
+    `api_key_header`: `Dict`\n
+    Dict containing the special header required by the Clockify API.
+
     `delay`: `float`\n
     An optional parameter indicating the delay between requests\n
     made to the Clockify API. The default is 0.2 seconds to respect\n
@@ -124,18 +205,19 @@ def get_projects(workspace_id: str, delay: float = 0.2) -> Dict:
     """
     projects = {}
     url = BASE_ENDPOINT + '/workspaces/{}/projects'.format(workspace_id)
-    r = requests.get(url, headers=X_API_HEADER)
+    r = requests.get(url, headers=api_key_header)
     response = r.json()
     for project in response:
         project_id = project['id']
         project_name = project['name']
-        tasks = get_tasks_by_project_id(workspace_id, project_id)
+        tasks = get_tasks_by_project_id(workspace_id, project_id, api_key_header)
         projects[project_id] = [project_name, tasks]
         time.sleep(delay)
     return projects
 
 def get_time_entries(workspace_id: str, user_id: str,
-                     maxpages: int, num_entries: int = 0, delay: float = 0.2) -> List:
+                     num_pages: int, api_key_header: Dict, 
+                     delay: float = 0.2) -> List:
     """Get the time entries for a specific user in a specific workspace.
     
     This function returns a list of some (or all) of the time entries
@@ -143,14 +225,7 @@ def get_time_entries(workspace_id: str, user_id: str,
 
     Currently, Clockify does not have an API for GETting the total number of
     entries created by a particular user, but this information is displayed at
-    the bottom of the time tracker UI. If you want to get all of the entries
-    corresponding to a given user, you can pass in an arbitrarily high
-    value for `maxpages` (not recommended) or get the number of entries from
-    looking at the UI and pass this in as `num_entries`, then use a dummy value
-    for `maxpages`. Another alternative is to get the number of entries, `x`,
-    from the UI, then let `maxpages` equal `int(math.ceil(x / ENTRIES_PER_PAGE))`,
-    where `ENTRIES_PER_PAGE` is the default number of entries per page returned
-    by the Clockify API (currently 50).
+    the bottom of the time tracker UI.
 
     Parameters
     ----------
@@ -160,17 +235,12 @@ def get_time_entries(workspace_id: str, user_id: str,
     `user_id`: `str`\n
     The ID of the user in the workspace to pull time entries from.
 
-    `maxpages`: `int`\n
-    The maximum number of contiguous pages to request from the API.
+    `num_pages`: `int`\n
+    The number of contiguous pages to request from the API, starting
+    from the first page.
 
-    `num_entries`: `int`
-    An optional parameter indicating the number of entries, and thus, the\n
-    number of pages, to request from the API. Explanation: Since the\n
-    default number of entries per page is 50, per \n
-    (https://clockify.me/developers-api), the value\n
-    that `num_entries` takes on is really a proxy for how many pages to\n
-    request. If `num_entries` is specified, the number of pages is\n
-    calculated by taking `math.ceil(num_entries / 50)`.
+    `api_key_header`: `Dict`\n
+    Dict containing the special header required by the Clockify API.
 
     `delay`: `float`\n
     An optional parameter indicating the delay between requests\n
@@ -184,15 +254,12 @@ def get_time_entries(workspace_id: str, user_id: str,
     A list of time entries, each of which is a `dict` with fields\n
     matching those described in the API documentation.
     """
-    if num_entries != 0:
-        maxpages = int(math.ceil(num_entries / ENTRIES_PER_PAGE))
-
     url = BASE_ENDPOINT + \
         '/workspaces/{}/user/{}/time-entries'.format(workspace_id, user_id)
     entries = []
-    for page in range(1, maxpages + 1):
+    for page in range(1, num_pages + 1):
         newurl = url + '?page={}'.format(page)
-        r = requests.get(newurl, headers=X_API_HEADER)
+        r = requests.get(newurl, headers=api_key_header)
         response = r.json()
         for entry in response:
             entries.append(entry)
@@ -226,16 +293,5 @@ def dump_data(data: Any, filename: str) -> None:
     json.dump(data, d)
     d.close()
 
-
 if __name__ == '__main__':
-    user_id, workspace_id = get_user_info()
-    projects = get_projects(workspace_id)
-    time_entries = get_time_entries(workspace_id, user_id, 58)
-
-    dump_data(projects, 'projects.json')
-    tasks = {}
-    for _, tasks_dict in projects.values():
-        for k, v in tasks_dict.items():
-            tasks[k] = v
-    dump_data(tasks, 'tasks.json')
-    dump_data(time_entries, 'data.json')
+    main()
