@@ -32,7 +32,7 @@ def main():
     group.add_argument('--num-pages',
                         type=int,
                         dest='num_pages',
-                        help='The number of (continguous) pages to request from the Clockify API.')
+                        help='The number of (contiguous) pages to request from the Clockify API.')
     group.add_argument('--num-entries',
                         type=int,
                         dest='num_entries',
@@ -44,21 +44,21 @@ def main():
                         type=str,
                         dest='proj_file',
                         help='The name of the file to write projects information to. Defaults\n' +
-                        'to \'projects.json\' if not specified',
+                        'to \'projects.json\' if not specified.',
                         required=False)
     parser.add_argument('-t',
                         '--tasks-file',
                         type=str,
                         dest='tasks_file',
                         help='The name of the file to write tasks information to. Defaults\n' +
-                        'to \'tasks.json\' if not specified',
+                        'to \'tasks.json\' if not specified.',
                         required=False)
     parser.add_argument('-e',
                         '--entries-file',
                         type=str,
                         dest='entries_file',
                         help='The name of the file to write time entry data to. Defaults\n' +
-                        'to \'entries.json\' if not specified',
+                        'to \'entries.json\' if not specified.',
                         required=False)
     args = parser.parse_args()
     api_key = args.api_key
