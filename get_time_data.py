@@ -13,9 +13,11 @@ USER_ENDPOINT = BASE_ENDPOINT + 'user'
 # Check https://clockify.me/developers-api, in the section
 # about time entry request parameters
 ENTRIES_PER_PAGE = 50
+# Delay between API requests to avoid rate limiting
 DEFAULT_DELAY = 0.2
 
 def main():
+    """Runs the program."""
     # Parse command-line args
     parser = argparse.ArgumentParser(prog='get_time_data.py',
                                     description='Get Clockify projects, tasks, and time entry data and write it to files.',
@@ -70,7 +72,7 @@ def main():
                         'to fail due to Clockify API rate limiting.',
                         required=False)
     args = parser.parse_args()
-    
+
     api_key = args.api_key
     # use environment variable instead
     if api_key is None:
