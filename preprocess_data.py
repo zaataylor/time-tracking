@@ -1,9 +1,70 @@
 import json
 import csv
 from typing import List
+import argparse
+
+from get_time_data import dump_data
 
 SECONDS_IN_MINUTE = 60
 SECONDS_IN_HOUR = SECONDS_IN_MINUTE * 60
+
+def main():
+    """Runs the program."""
+    # Parse command-line args
+    parser = argparse.ArgumentParser(prog='preprocess_data.py',
+                                    description='Preprocess Clockify API data from files in an opinionated fashion.',
+                                    epilog='Have fun preprocessing! :)')
+    parser.add_argument('-p',
+                        '--projects-file',
+                        type=str,
+                        dest='proj_file',
+                        help='The name of the file to get projects information from. Defaults\n' +
+                        'to \'projects.json\' if not specified.',
+                        required=False)
+    parser.add_argument('-t',
+                        '--tasks-file',
+                        type=str,
+                        dest='tasks_file',
+                        help='The name of the file to get tasks information from. Defaults\n' +
+                        'to \'tasks.json\' if not specified.',
+                        required=False)
+    parser.add_argument('-e',
+                        '--entries-file',
+                        type=str,
+                        dest='entries_file',
+                        help='The name of the file to get time entry data from. Defaults\n' +
+                        'to \'entries.json\' if not specified.',
+                        required=False)
+    parser.add_argument('-d',
+                        '--data-file',
+                        type=str,
+                        dest='proc_data_file',
+                        help='The name of the file that will hold the preprocessed data.\n' +
+                        'Defaults to \'preprocessed_data.json\'.')
+    parser.add_argument('--csv',
+                        dest='export_csv',
+                        action='store_true',
+                        help='Specify this flag to indicate that the data should also be\n' + 
+                        'exported to CSV format. The CSV file will have the same name as\n' +
+                        'the file specified by the -d/--data-file argument, or be named\n' +
+                        '\'preprocessed_data.csv\' if that argument is not given.', 
+                        default=False)
+    args = parser.parse_args()
+    proj_file = 'projects.json' if args.proj_file is None else args.proj_file
+    tasks_file = 'tasks.json' if args.tasks_file is None else args.tasks_file
+    entries_file = 'entries.json' if args.entries_file is None else args.entries_file
+
+    preproc_data = preprocess_data(proj_file, tasks_file, entries_file)
+
+    preproc_data_file = \
+        'preprocessed_data.json' if args.proc_data_file is None else args.proc_data_file
+    if args.export_csv:
+        preproc_csv_file = preproc_data_file.split('.')[0] + '.csv'
+        export_to_csv(preproc_csv_file, preproc_data)
+
+    if not preproc_data_file.endswith('.json'):
+        preproc_data_file += '.json'
+    dump_data(preproc_data, preproc_data_file)
 
 def calculate_duration(duration: str) -> int:
     """Parse Clockify time entry duration string into total number of seconds.
@@ -94,7 +155,7 @@ def get_date(isoformattime: str):
     date = isoformattime[0: T_index]
     return date
 
-def preprocess_data(projects_file: str, tasks_file: str, data_file: str) -> List:
+def preprocess_data(projects_file: str, tasks_file: str, entries_file: str) -> List:
     """Preprocess raw Clockify API time entry data and extract relevant fields.
 
     This function extracts the task ID, task name, project ID, project name,
@@ -110,13 +171,13 @@ def preprocess_data(projects_file: str, tasks_file: str, data_file: str) -> List
         tasks maps task ID to task name.
     `tasks_file` : str
         This file contains a dictionary mapping task ID to task name.
-    `data_file` : str
-        The raw data of time entries from the Clockify API.
+    `entries_file` : str
+        The file containing raw time entry data from the Clockify API.
 
     Returns
     --------
     `List`
-        A list of dictionaries, each of which contains the fields extracted
+        A list of dictionaries, each of which contains fields extracted
         from a time entry.
 
     Raises
@@ -128,7 +189,7 @@ def preprocess_data(projects_file: str, tasks_file: str, data_file: str) -> List
 
     p = open(projects_file, mode='r')
     t = open(tasks_file, mode='r')
-    d = open(data_file, mode='r')
+    d = open(entries_file, mode='r')
     projects, tasks, data = json.load(p), json.load(t), json.load(d)
     processed_items = []
     for datum in data:
@@ -141,11 +202,14 @@ def preprocess_data(projects_file: str, tasks_file: str, data_file: str) -> List
             proc_item['task_id'] = datum['taskId']
             proc_item['task_name'] = tasks[datum['taskId']]
 
+        # project ID and project name
         proc_item['project_id'] = datum['projectId']
         proc_item['project_name'] = projects[datum['projectId']][0]
 
+        # lowercase all project descriptions
         proc_item['description'] = str.lower(datum['description'])
 
+        # get UTC start time, and (separately) date
         start_time_utc = datum['timeInterval']['start']
         proc_item['start_time_utc'] = start_time_utc
         proc_item['start_date_utc'] = get_date(start_time_utc)
@@ -176,18 +240,6 @@ def export_to_csv(preproc_data_file: str, preproc_data: List):
                                 pi['start_date_utc'],  pi['end_time_utc'], pi['end_date_utc'],
                                 pi['duration_seconds']])
 
-def export_to_json(preproc_data_file: str, preproc_data: List):
-    """Export preprocessed data to JSON."""
-    prpd = open(preproc_data_file, 'w')
-    json.dump(preproc_data, prpd)
-
 if __name__ == '__main__':
-    projects_file = 'projects.json'
-    tasks_file = 'tasks.json'
-    data_file = 'data.json'
-    preproc_data_file = 'preprocessed_data'
-
-    preproc_data = preprocess_data(projects_file, tasks_file, data_file)
-    export_to_csv(preproc_data_file + '.csv', preproc_data)
-    export_to_json(preproc_data_file + '.json', preproc_data)
+    main()
 
