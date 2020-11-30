@@ -20,9 +20,6 @@
     - What forms should the data take?
         - CSV
         - JSON
-    - How should I make the data more amenable for analysis after automated preprocessing?
-        - It might be a good idea to go through manually and just make sure that descriptions and assigned tasks match up. This would make the analysis more robust, but would also cost me more time.
-        - I'm looking at this, and there are a lot of entries that don't have a task associated with them. I think that what I'll do is just analyze these separately. Alternatively, might be able to do some work with Google Sheets.
 - [&check;] Come up with some interesting questions to ask, then answer them.
     - How many times was I figuring out what to work on next?
     - At what point did figuring out what to work on shift from being labeled as "Classes" to being labeled "Self-Maintenance -> Planning and Organizing"?
@@ -36,6 +33,6 @@
     - How many miles did I run?
     - How much time did I meditate in total? On average?
     - How many entries did I make in each category?
-- [] Visualize the results
+- [ _TODO_ ] Analyze and visualize the results
     - [Pandas Intro](https://www.educative.io/blog/python-pandas-tutorial)
     - **Could use jupyter notebook for analysis**
