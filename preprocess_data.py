@@ -75,23 +75,23 @@ def calculate_duration(duration: str) -> int:
     duration of 1 hour, 3 minutes, and 6 seconds, the function would
     return 3786, the total number of seconds in that duration.
 
-    The function expects at least of 'H', 'M', or 'S' to be in the
-    duration string, and will throw a ValueError if not.
+    The function expects at least one of 'H', 'M', or 'S' to be in the
+    duration string, and raises a ValueError if not.
 
     Parameters
     -----------
-    `duration` : `str`
-        A string representing the time duration.
+    `duration` : `str`\n
+    A string representing the time duration.
 
     Returns
     -------
-    `int`
-        The total time, in seconds, of the time duration.
+    `int`\n
+    The total time, in seconds, of the time duration.
 
     Raises
     ------
-    `ValueError`
-        If none of 'H', 'M', or 'S' were found in `duration` string.
+    `ValueError`\n
+    If none of 'H', 'M', or 'S' were found in `duration` string.
     """
     # remove 'PT' from duration string
     duration = duration[2:]
@@ -121,30 +121,24 @@ def calculate_duration(duration: str) -> int:
 
     # calculate total time in seconds
     # there are 7 cases: [H] only, [M] only, [S] only,
-    # [H,M] only, [H,S] only, [M,S] only, [H,M,S]
+    # [H,M] only, [H,S] only, [M,S] only, and [H,M,S]
     total = 0
-    # [H,M,S] case
-    if len(duration) == 3:
-        total = duration[0]*SECONDS_IN_HOUR + \
-            duration[1]*SECONDS_IN_MINUTE + duration[2]
-    # the other 6 cases
-    else:
-        # idea: while iterating over boolean values in hms_found list, 
-        # select rightmost unused value in duration list. Then, based
-        # on index in hms_found, add the appropriate multiple of 
-        # duration[i] (corresponding to hours, minutes, or seconds)
-        # to total number of seconds
-        i = 0
-        for idx, found in enumerate(hms_found):
-            if not found:
-                continue
-            elif idx == 0:
-                total += duration[i]*SECONDS_IN_HOUR
-            elif idx == 1:
-                total += duration[i]*SECONDS_IN_MINUTE
-            else:
-                total += duration[i]
-            i += 1
+    # Idea: while iterating over boolean values in hms_found list, 
+    # select leftmost unused value in duration list. Then, based
+    # on index in hms_found, add the appropriate multiple of 
+    # duration[i] (corresponding to hours, minutes, or seconds)
+    # to the total number of seconds
+    i = 0
+    for idx, found in enumerate(hms_found):
+        if not found:
+            continue
+        elif idx == 0:
+            total += duration[i]*SECONDS_IN_HOUR
+        elif idx == 1:
+            total += duration[i]*SECONDS_IN_MINUTE
+        else:
+            total += duration[i]
+        i += 1
     return total
 
 def get_date(isoformattime: str) -> str:
@@ -180,27 +174,29 @@ def preprocess_data(projects_file: str, tasks_file: str, entries_file: str) -> L
 
     Parameters
     -----------
-    `projects_file` : `str`
-        Name of the file that holds the dictionary with the following mapping:
-        project ID to [project name, dictionary of tasks], reflecting the
-        hierarchical nature of the Project-Task relationship. The dictionary of
-        tasks maps task ID to task name.
-    `tasks_file` : `str`
-        This file contains a dictionary mapping task ID to task name.
-    `entries_file` : `str`
-        The file containing raw time entry data from the Clockify API.
+    `projects_file` : `str`\n
+    Name of the file that holds the dictionary with the following mapping:
+    project ID to [project name, dictionary of tasks], reflecting the
+    hierarchical nature of the Project-Task relationship. The dictionary of
+    tasks maps task ID to task name.
+
+    `tasks_file` : `str`\n
+    This file contains a dictionary mapping task ID to task name.
+
+    `entries_file` : `str`\n
+    The file containing raw time entry data from the Clockify API.
 
     Returns
     --------
-    `List`
-        A list of dictionaries, each of which contains fields extracted
-        from a time entry.
+    `List`\n
+    A list of dictionaries, each of which contains fields extracted
+    from a time entry.
 
     Raises
     -------
-    `KeyError`
-        If the 'duration' key in the raw time entry dict obtained from `data_file`
-        is not present.
+    `KeyError`\n
+    If the 'duration' key in the raw time entry dict obtained from `data_file`
+    is not present.
     """
 
     p = open(projects_file, mode='r')
