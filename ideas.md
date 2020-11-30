@@ -12,7 +12,7 @@
         - Task Name
         - Project ID
         - Project Name
-        - Description
+        - Description (lower case)
         - Time Interval
             - Start
             - End
@@ -20,15 +20,22 @@
     - What forms should the data take?
         - CSV
         - JSON
-- [] Come up with some interesting questions to ask
+    - How should I make the data more amenable for analysis after automated preprocessing?
+        - It might be a good idea to go through manually and just make sure that descriptions and assigned tasks match up. This would make the analysis more robust, but would also cost me more time.
+        - I'm looking at this, and there are a lot of entries that don't have a task associated with them. I think that what I'll do is just analyze these separately. Alternatively, might be able to do some work with Google Sheets.
+- [&check;] Come up with some interesting questions to ask, then answer them.
+    - How many times was I figuring out what to work on next?
+    - At what point did figuring out what to work on shift from being labeled as "Classes" to being labeled "Self-Maintenance -> Planning and Organizing"?
+    - What was the average number of entries created per day?
+    - How much time did I sleep in total?
     - How much sleep did I get on average each week?
     - How much sleep did I practice month to month?
     - What meals took the longest for me to eat?
-    - What was the most _unusual_ day? (Think of outliers in different senses of the word)
-    - How did my Career & Post-Grad task time change before and after I accepted the job on November 1st?
+    - How did my Career & Post-Grad task time change before and after I accepted the job on November 2nd?
     - How much time did I have for shower thoughts, on average?
-        - Related: What's a good estimate of how much water I used when showering?
     - How many miles did I run?
     - How much time did I meditate in total? On average?
-- [] Find answers to those questions via visualization, data exploration, etc.
-    - Recommendations for tools to use [here](https://towardsdatascience.com/10-free-tools-to-instantly-get-started-with-data-visualisation-d7fadb5f6dce)
+    - How many entries did I make in each category?
+- [] Visualize the results
+    - [Pandas Intro](https://www.educative.io/blog/python-pandas-tutorial)
+    - **Could use jupyter notebook for analysis**
