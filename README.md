@@ -9,7 +9,9 @@ active workspace.
 A writeup of my findings will be posted soon, and this README will be updated with its location.
 
 This is really just something I did for fun, so I'm not planning on making any major updates
-to the code for the project after this, aside from possibly adding some visualization-related code. One of the known limitations of the code is that it chooses whatever is designated as your active
+to the code for the project after this, aside from possibly adding some visualization-related code. 
+
+One of the known limitations of the code is that it chooses whatever is designated as your active
 workspace by default. Since I am a first-time Clockify user and only have one active workspace,
 this was not an issue for me, but you may have to rework the code if you have more workspaces
 and this causes problems for you.
