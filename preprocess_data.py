@@ -80,7 +80,7 @@ def calculate_duration(duration: str) -> int:
 
     Parameters
     -----------
-    `duration` : str
+    `duration` : `str`
         A string representing the time duration.
 
     Returns
@@ -147,8 +147,24 @@ def calculate_duration(duration: str) -> int:
             i += 1
     return total
 
-def get_date(isoformattime: str):
-    """Extract {YYYY-MM-DD} from ISO 8601 formatted time string."""
+def get_date(isoformattime: str) -> str:
+    """Extract {YYYY-MM-DD} from ISO 8601 formatted time string.
+    
+    Parameters
+    ----------
+    `isoformattime`: `str`\n
+    An ISO 8601 formatted time string.
+
+    Returns
+    -------
+    `str`\n
+    A string containing the date portion of the original time string.
+
+    Raises
+    ------
+    `ValueError`\n
+    If the 'T' prefacing the time part of the string is missing.
+    """
     T_index = isoformattime.find('T')
     if T_index == -1:
         raise ValueError('Improperly formatted time string given.')
@@ -164,14 +180,14 @@ def preprocess_data(projects_file: str, tasks_file: str, entries_file: str) -> L
 
     Parameters
     -----------
-    `projects_file` : str
+    `projects_file` : `str`
         Name of the file that holds the dictionary with the following mapping:
         project ID to [project name, dictionary of tasks], reflecting the
         hierarchical nature of the Project-Task relationship. The dictionary of
         tasks maps task ID to task name.
-    `tasks_file` : str
+    `tasks_file` : `str`
         This file contains a dictionary mapping task ID to task name.
-    `entries_file` : str
+    `entries_file` : `str`
         The file containing raw time entry data from the Clockify API.
 
     Returns
@@ -226,8 +242,25 @@ def preprocess_data(projects_file: str, tasks_file: str, entries_file: str) -> L
         processed_items.append(proc_item)
     return processed_items
 
-def export_to_csv(preproc_data_file: str, preproc_data: List):
-    """Export preprocessed data to CSV."""
+def export_to_csv(preproc_data_file: str, preproc_data: List) -> None:
+    """Export preprocessed data to CSV.
+    
+    Parameters
+    -----------
+    `preproc_data_file`:`str`\n
+    Name of the file to write preprocessed data to.
+
+    `preproc_data`: `List`\n
+    A list containing dictionaries representing preprocessed time entries.
+
+    Returns:
+    --------
+    `None`
+
+    Raises
+    ------
+    `None`
+    """
     with open(preproc_data_file, 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=',')
         csvwriter.writerow(['Project Name', 'Project ID', 'Task Name',
