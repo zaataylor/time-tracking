@@ -3,11 +3,16 @@
 ## Description
 
 This is the code for the time tracking experiment that I did during the Fall 2020 semester.
+You can use the code to get JSON-formatted data of all of your Clockify time entries in your
+active workspace.
 
 A writeup of my findings will be posted soon, and this README will be updated with its location.
 
 This is really just something I did for fun, so I'm not planning on making any major updates
-to the code for the project after this, aside from adding some visualization-related code.
+to the code for the project after this, aside from possibly adding some visualization-related code. One of the known limitations of the code is that it chooses whatever is designated as your active
+workspace by default. Since I am a first-time Clockify user and only have one active workspace,
+this was not an issue for me, but you may have to rework the code if you have more workspaces
+and this causes problems for you.
 
 ## Getting Started
 
@@ -35,7 +40,12 @@ pipenv install
 pipenv shell
 ```
 
-4. Get time tracking data by invoking `python get_time_data.py` with the proper command line parameters. Here is the
+4. Get time tracking data by invoking `python get_time_data.py` with the proper command line parameters. The simplest invocation to get started is:
+```bash
+python get_time_data.py -a {API_KEY} --num-entries {NUM_ENTRIES}
+```
+where `API_KEY` is the value of the key obtained from step 1 and `NUM_ENTRIES` is a 
+positive integer representing some number of entries made in Clockify. Here is the full 
 usage information:
 ```bash
 usage: get_time_data.py [-h] [-a API_KEY]
@@ -78,9 +88,12 @@ Have fun tracking! :)
 ```
 
 5. (Optional) Invoke the `preprocess_data.py` script to process the time entry data
-retrieved from the Clockify API in an opinionated fashion. Here's an example of what
-the preprocessor script does to a time entry:
-
+retrieved from the Clockify API in an opinionated fashion. The simplest invocation
+to get started (assuming no file name parameters were specified in step 4) is:
+```bash
+python preprocess_data.py
+```
+Here's an example of what the preprocessor script does to a time entry:
 
 Raw Clockify API data:
 ```JSON
